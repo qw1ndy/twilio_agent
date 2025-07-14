@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from utils.state import ConversationState
 from .nodes import ai_response, extract_info_node, should_end
 
@@ -10,7 +10,7 @@ def build_graph():
     builder.add_edge("ai", "extract")
     builder.add_conditional_edges("extract", should_end, {
         "continue": "ai",
-        "end": "end"
+        "end": END
     })
 
     app = builder.compile()

@@ -56,7 +56,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 state = cast(ConversationState, result)
 
                 response = state["history"][-1]
-                print(f"🤖 Response: {response}")
+                print(f"Response: {response}")
 
                 await websocket.send_text(json.dumps({
                     "type": "text",
@@ -64,7 +64,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "last": True
                 }))
 
-                if state["info"].name and state["info"].agreed_to_coffee:
+                if state["info"].name:
                     print(f"Name: {state['info'].name}, Agreed: {state['info'].agreed_to_coffee}")
                     await websocket.send_text(json.dumps({
                         "type": "text",
@@ -80,7 +80,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 print(f"Error from Twilio: {data.get('description')}")
 
     except Exception as e:
-        print(f"❌ WebSocket error: {e}")
+        print(f"WebSocket error: {e}")
     finally:
         try:
             await websocket.close()

@@ -31,9 +31,13 @@ async def websocket_endpoint(websocket: WebSocket):
             data = json.loads(message)
             msg_type = data.get("type")
             user_input = data.get("voicePrompt", "")
+            history = []
+
 
             if msg_type == "setup":
                 ai_text, user_info = pipeline.run_turn(["Start conversation"])
+
+                history.append(ai_text)
 
                 await websocket.send_text(json.dumps({
                     "type": "text",
@@ -43,7 +47,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif msg_type == "prompt":
                 print(f"User said: {user_input}")
-                ai_text, user_info = pipeline.run_turn(user_input)
+
+                history.append(user_input)
+                ai_text, user_info = pipeline.run_turn(history)
 
                 print(f"Response: {ai_text}")
 

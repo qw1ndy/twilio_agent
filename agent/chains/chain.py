@@ -34,9 +34,7 @@ class Pipeline:
         prompt_text = "\n".join(history)
 
         ai_response = self.dialogue_chain.invoke({"history": prompt_text})
-        ai_text = ai_response.content if hasattr(ai_response, "content") else str(ai_response)
-        history.append(f"AI: {ai_text}")
-
+        
         if hasattr(ai_response, "content"):
             ai_text = str(ai_response.content)
         elif isinstance(ai_response, str):
@@ -45,6 +43,8 @@ class Pipeline:
             ai_text = "\n".join([str(item) for item in ai_response])
         else:
             ai_text = str(ai_response)
+
+        history.append(f"AI: {ai_text}")
 
         user_info = self.extract_chain.invoke({"history": "\n".join(history)})
 

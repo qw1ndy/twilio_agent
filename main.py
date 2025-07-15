@@ -2,9 +2,9 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import Response
 from utils.twilio_utils import initiate_call
 from utils.twiml_generator import generate_twiml
-from agent.graph.graph import build_graph
-from utils.state import ConversationState, User_Info
-from typing import cast
+# from agent.graph.graph import build_graph 
+# from utils.state import ConversationState, User_Info 
+from agent.chains.chain import Pipeline  
 import os
 import json
 from dotenv import load_dotenv
@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
-conversation_graph = build_graph()
+# conversation_graph = build_graph() 
+pipeline = Pipeline()  
 
 @app.post("/call", response_class=Response)
 async def make_call_and_get_twiml():
@@ -24,11 +25,6 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("WebSocket connection is established.")
 
-    state: ConversationState = {
-        "history": [],
-        "info": User_Info()
-    }
-
     try:
         while True:
             message = await websocket.receive_text()
@@ -37,38 +33,31 @@ async def websocket_endpoint(websocket: WebSocket):
             user_input = data.get("voicePrompt", "")
 
             if msg_type == "setup":
-                result = conversation_graph.invoke(state)
-                state = cast(ConversationState, result)
-                response = state["history"][-1]
+                ai_text, user_info = pipeline.run_turn(["Start conversation"])
 
                 await websocket.send_text(json.dumps({
                     "type": "text",
-                    "token": response,
+                    "token": ai_text,
                     "last": True
                 }))
 
             elif msg_type == "prompt":
                 print(f"User said: {user_input}")
+                ai_text, user_info = pipeline.run_turn(user_input)
 
-                state["history"].append(f"Human: {user_input}")
-
-                result = conversation_graph.invoke(state)
-                state = cast(ConversationState, result)
-
-                response = state["history"][-1]
-                print(f"Response: {response}")
+                print(f"Response: {ai_text}")
 
                 await websocket.send_text(json.dumps({
                     "type": "text",
-                    "token": response,
+                    "token": ai_text,
                     "last": True
                 }))
 
-                if state["info"].name:
-                    print(f"Name: {state['info'].name}, Agreed: {state['info'].agreed_to_coffee}")
+                if user_info.name:
+                    print(f"Name: {user_info.name}, Agreed: {user_info.agreed_to_coffee}")
                     await websocket.send_text(json.dumps({
                         "type": "text",
-                        "token": state["info"].name,
+                        "token": user_info.name,
                         "last": True
                     }))
                     await websocket.send_text(json.dumps({

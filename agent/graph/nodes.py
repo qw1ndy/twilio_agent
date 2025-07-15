@@ -7,7 +7,7 @@ def ai_response(state: ConversationState) -> ConversationState:
     history = state["history"]
     info = state["info"]
 
-    if info.name and info.agreed_to_coffee:
+    if info.name:
         reply = info.name
     else:
         full_prompt = system_prompt + "\n\nConversation so far:\n" + "\n".join(history)
